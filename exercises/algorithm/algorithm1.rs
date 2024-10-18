@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -29,13 +28,13 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T:PartialOrd + Clone> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T:PartialOrd + Clone> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -69,15 +68,43 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self {
+        unsafe {
+            if list_a.length == 0 {
+                list_b
+            }else if list_b.length == 0 {
+                list_a
+            }else {
+                let mut ret = Self::new();
+                let mut a_cur = list_a.start;
+                let mut b_cur = list_b.start;
+                while list_a.length != 0 || list_b.length != 0 {
+                    match (a_cur, b_cur) {
+                        (Some(anode), Some(bnode)) => {
+                            let aptr = anode.as_ptr().clone();
+                            let bptr = bnode.as_ptr().clone();
+                            let vala = (*aptr).val.clone();
+                            let valb = (*bptr).val.clone();
+                            ret.add(if vala < valb { a_cur = (*aptr).next; vala } 
+                                    else { b_cur = (*bptr).next; valb });
+                        },
+                        (None, Some(bnode)) => { 
+                            let bptr = bnode.as_ptr().clone();
+                            ret.add((*bptr).val.clone()); 
+                            b_cur = (*bptr).next;
+                        },
+                        (Some(anode), None) => {
+                            let aptr = anode.as_ptr();
+                            ret.add((*aptr).val.clone());
+                            a_cur = (*aptr).next;
+                        },
+                        _ => break,
+                    }
+                }
+                ret
+            }
         }
-	}
+    }
 }
 
 impl<T> Display for LinkedList<T>
